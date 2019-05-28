@@ -357,19 +357,19 @@
    <TextEncoding>134217984</TextEncoding>
    <SourceLine>Sub RicercaPneumatici(ipcode as String, marca as String, settore as String, stagione as String, partner as String, ipcodestd as string, ipstd as string, checkGiacenza as boolean = false)</SourceLine>
    <SourceLine>Dim sql as String, sqlcount as String, orderby as String, where as String</SourceLine>
-   <SourceLine>Dim rsc as  RecordSet, numrec as integer, dc as String</SourceLine>
+   <SourceLine>Dim rsc as  RecordSet, numrec as integer, colrsc as Integer, dc as String, textpricedrop as String, textstockdrop as String</SourceLine>
    <SourceLine>ProductList.DeleteAllRows</SourceLine>
    <SourceLine>if DbConnect then</SourceLine>
    <SourceLine>try</SourceLine>
    <SourceLine></SourceLine>
-   <SourceLine>sql = "SELECT distinct IMMAGINE, ICARICO, TITOLOALTERNATIVO, SKU, SETTORE, CODICEVEL,STAGIONE, RUNFLAT,RADIALE, IPCODE,IPCODESTD, DESCRIZIONE, MARCA, LARGHEZZA, SERIE,CODICECERCHIO as CERCHIO, EAN, GIACENZA,PARTNER,prezzooriginalefornitore,BESTPRICE, prezzoscontato,obsoleto ,ap FROM  linky_integro_articoli "</SourceLine>
+   <SourceLine>sql = "SELECT distinct IMMAGINE, ICARICO, TITOLOALTERNATIVO, SKU, SETTORE, CODICEVEL,STAGIONE, RUNFLAT,RADIALE, IPCODE,IPCODESTD, DESCRIZIONE, MARCA, LARGHEZZA, SERIE,CODICECERCHIO as CERCHIO, EAN, GIACENZA,PARTNER,prezzooriginalefornitore,BESTPRICE, prezzoscontato,obsoleto , ap, prezzodropship, giacenzadropship FROM  linky_integro_articoli "</SourceLine>
    <SourceLine>sql = sql + " where  "</SourceLine>
    <SourceLine>sqlcount = "SELECT count(*) FROM  linky_integro_articoli where  "</SourceLine>
    <SourceLine></SourceLine>
    <SourceLine>if ipcode&lt;&gt;"" then</SourceLine>
    <SourceLine>where =  " IPCODE like '" + ipcode + "%'"</SourceLine>
    <SourceLine>elseif ipcodestd&lt;&gt;"" then</SourceLine>
-   <SourceLine>sql = "SELECT distinct IMMAGINE, ICARICO, TITOLOALTERNATIVO, SKU, SETTORE, CODICEVEL,STAGIONE, RUNFLAT,RADIALE, IPCODE,IPCODESTD, DESCRIZIONE, MARCA, LARGHEZZA, SERIE,CODICECERCHIO as CERCHIO, EAN, GIACENZA,PARTNER,prezzooriginalefornitore,BESTPRICE, prezzoscontato,obsoleto,ap FROM  linky_integro_articoli "</SourceLine>
+   <SourceLine>sql = "SELECT distinct IMMAGINE, ICARICO, TITOLOALTERNATIVO, SKU, SETTORE, CODICEVEL,STAGIONE, RUNFLAT,RADIALE, IPCODE,IPCODESTD, DESCRIZIONE, MARCA, LARGHEZZA, SERIE,CODICECERCHIO as CERCHIO, EAN, GIACENZA,PARTNER,prezzooriginalefornitore,BESTPRICE, prezzoscontato,obsoleto, ap, prezzodropship, giacenzadropship FROM  linky_integro_articoli "</SourceLine>
    <SourceLine>sql = sql + " where sku in (select sku from linky_integro_articoli "</SourceLine>
    <SourceLine>sqlcount = "SELECT count(*) FROM  linky_integro_articoli where sku in (select sku from linky_integro_articoli "</SourceLine>
    <SourceLine></SourceLine>
@@ -431,9 +431,11 @@
    <SourceLine>if rsc &lt;&gt; nil then</SourceLine>
    <SourceLine>rsc.MoveFirst</SourceLine>
    <SourceLine>ProductList.DeleteAllRows</SourceLine>
-   <SourceLine>Productlist.Columncount = rsc.FieldCount</SourceLine>
+   <SourceLine>colrsc = (rsc.FieldCount-1)</SourceLine>
+   <SourceLine>Productlist.Columncount = colrsc</SourceLine>
    <SourceLine></SourceLine>
-   <SourceLine>For i as Integer = 1 to rsc.FieldCount</SourceLine>
+   <SourceLine></SourceLine>
+   <SourceLine>For i as Integer = 1 to colrsc</SourceLine>
    <SourceLine>'Productlist.Cell(Productlist.lastIndex, i - 1) = rsc.IdxField(i).Name</SourceLine>
    <SourceLine>'Productlist.CellBold(Productlist.LastIndex, i - 1) = True</SourceLine>
    <SourceLine>ProductList.Heading(i - 1) = rsc.IdxField(i).Name</SourceLine>
@@ -442,9 +444,19 @@
    <SourceLine>'Productlist.CellBold(Productlist.LastIndex, 0) = True</SourceLine>
    <SourceLine>Do Until rsc.EOF</SourceLine>
    <SourceLine>Productlist.AddRow rsc.IdxField(1).StringValue //display first column</SourceLine>
-   <SourceLine>For i as Integer =1 to rsc.FieldCount-1</SourceLine>
+   <SourceLine>For i as Integer =1 to colrsc</SourceLine>
    <SourceLine>Productlist.Cell(Productlist.LastIndex, i-1 ) = rsc.IdxField(i).StringValue</SourceLine>
    <SourceLine>Next</SourceLine>
+   <SourceLine></SourceLine>
+   <SourceLine>if rsc.idxField(25).StringValue = "" then </SourceLine>
+   <SourceLine>textpricedrop = ""</SourceLine>
+   <SourceLine>textstockdrop = ""</SourceLine>
+   <SourceLine>else</SourceLine>
+   <SourceLine>textpricedrop = "Prz Drop: " + rsc.IdxField(25).StringValue + " Prz Orig.: "  + rsc.IdxField(20).StringValue '+ " partner " + rsc.IdxField(19).StringValue</SourceLine>
+   <SourceLine>textstockdrop = "Qty Drop: " +  rsc.IdxField(26).StringValue + " Qty Orig.: " + rsc.IdxField(18).StringValue</SourceLine>
+   <SourceLine>end if</SourceLine>
+   <SourceLine></SourceLine>
+   <SourceLine></SourceLine>
    <SourceLine>if rsc.IdxField(21).StringValue="1" then</SourceLine>
    <SourceLine>Productlist.CellTag(Productlist.LastIndex,20)="RED"</SourceLine>
    <SourceLine>end</SourceLine>
@@ -458,6 +470,9 @@
    <SourceLine>Productlist.CellType(Productlist.LastIndex, 23) = ListBox.TypeEditableTextField</SourceLine>
    <SourceLine>Productlist.Cell(Productlist.LastIndex, 23) = rsc.IdxField(24).StringValue</SourceLine>
    <SourceLine>rsc.MoveNext</SourceLine>
+   <SourceLine></SourceLine>
+   <SourceLine>ProductList.CellHelpTag(ProductList.LastIndex,19) = textpricedrop </SourceLine>
+   <SourceLine>ProductList.CellHelpTag(ProductList.LastIndex,17) = textstockdrop</SourceLine>
    <SourceLine></SourceLine>
    <SourceLine>Loop</SourceLine>
    <SourceLine>rsc.Close</SourceLine>
@@ -4122,7 +4137,7 @@
    <ItemSource>
     <TextEncoding>134217984</TextEncoding>
     <SourceLine>Function CellClick(row as Integer, column as Integer, x as Integer, y as Integer) As Boolean</SourceLine>
-    <SourceLine>if column &lt; 9 or (column &gt;12 and column &lt;17) or (column &gt;21 and column &lt;22 ) or  column =23  then</SourceLine>
+    <SourceLine>if column &lt; 9 or (column &gt;12 and column &lt;17) or (column &gt;21 and column &lt;22 ) or  column =23   then</SourceLine>
     <SourceLine>Me.CellType(row, column) = Listbox.TypeEditable</SourceLine>
     <SourceLine>Me.EditCell(row, column)</SourceLine>
     <SourceLine>end</SourceLine>
@@ -4148,7 +4163,7 @@
     <SourceLine>dim nextCol as Integer</SourceLine>
     <SourceLine>if key = chr(9) or key = chr(29) then</SourceLine>
     <SourceLine></SourceLine>
-    <SourceLine>if column &lt; 8 or (column &gt; 12 and column &lt; 16 ) or (column &gt; 20 and   column &lt;23 )  or  column =24 then</SourceLine>
+    <SourceLine>if column &lt; 8 or (column &gt; 12 and column &lt; 16 ) or (column &gt; 20 and   column &lt;23 )  or  column =24 or (column &gt; 24 and column &lt;27) then</SourceLine>
     <SourceLine>nextCol = column + 1</SourceLine>
     <SourceLine></SourceLine>
     <SourceLine>me.EditCell(row, nextCol)</SourceLine>
@@ -6275,7 +6290,7 @@
   <PropertyVal Name="AutoDeactivate">True</PropertyVal>
   <PropertyVal Name="HelpTag"></PropertyVal>
   <PropertyVal Name="Visible">True</PropertyVal>
-  <PropertyVal Name="Value">15</PropertyVal>
+  <PropertyVal Name="Value">0</PropertyVal>
   <PropertyVal Name="SmallTabs">False</PropertyVal>
   <PropertyVal Name="Panels"></PropertyVal>
   <PropertyVal Name="TabDefinition"><Hex bytes="118">506E65756D61746963690D4D414B0D4F5A520D526963657263650D414C4341520D5445434B4C4F4749535449430D5753500D4D4F4D4F0D434154454E450D52554F54494E490D5452570D454241590D5052455A5A490D504E530D4D41524348450D4143434F5050494154450D543234205245504F5254</Hex></PropertyVal>
@@ -6331,7 +6346,7 @@
   <PropertyVal Name="UseFocusRing">True</PropertyVal>
   <PropertyVal Name="HasHeading">True</PropertyVal>
   <PropertyVal Name="ColumnWidths"></PropertyVal>
-  <PropertyVal Name="ColumnCount">24</PropertyVal>
+  <PropertyVal Name="ColumnCount">25</PropertyVal>
   <PropertyVal Name="Border">True</PropertyVal>
   <PropertyVal Name="Enabled">True</PropertyVal>
   <PropertyVal Name="AutoDeactivate">True</PropertyVal>
@@ -15404,6 +15419,13 @@
   <PartID>632015622</PartID>
   <ItemName></ItemName>
   <UnitType>Method</UnitType>
+  <UnitID>Sub RicercaPneumatici(ipcode as String, marca as String, settore as String, stagione as String, partner as String, ipcodestd as string, ipstd as string, checkGiacenza as boolean = false)</UnitID>
+  <lineNum>5</lineNum>
+ </BreakPointGroup>
+ <BreakPointGroup>
+  <PartID>632015622</PartID>
+  <ItemName></ItemName>
+  <UnitType>Method</UnitType>
   <UnitID>Sub RicercaCerchi(ipcode as String, modello as String, diametro as String, finitura as String)</UnitID>
   <lineNum>7</lineNum>
  </BreakPointGroup>
@@ -15442,9 +15464,9 @@
    <EditorCount>1</EditorCount>
    <Editor>
     <EditorIndex>0</EditorIndex>
-    <EditorLocation>Accoppiate.RicercaAccoppiate</EditorLocation>
+    <EditorLocation>Window1.RicercaPneumatici</EditorLocation>
     <EditorPath></EditorPath>
-    <EditingPartID>51636223</EditingPartID>
+    <EditingPartID>632015622</EditingPartID>
     <EditorPath></EditorPath>
    </Editor>
    <SelectedTab>0</SelectedTab>
